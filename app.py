@@ -55,8 +55,14 @@ def compliments():
 @app.route('/compliments_results')
 def compliments_results():
     """Show the user some compliments."""
+    num_compliments = int(request.args.get('num_compliments'))
+
+    select_compliments = random.sample(list_of_compliments, num_compliments)
+
     context = {
-        # TODO: Enter your context variables here.
+        'users_name' : request.args.get('users_name'),
+        'wants_compliments' : request.args.get('wants_compliments'),
+        'select_compliments': select_compliments
     }
 
     return render_template('compliments_results.html', **context)
@@ -78,12 +84,15 @@ animal_to_fact = {
 def animal_facts():
     """Show a form to choose an animal and receive facts."""
 
-    # TODO: Collect the form data and save as variables
+    user_animal = request.args.get('animal')
+    selected_animal = animal_to_fact.get(user_animal)
 
     context = {
         # TODO: Enter your context variables here for:
         # - the list of all animals (get from animal_to_fact)
+        'animal_to_fact': animal_to_fact.keys(),
         # - the chosen animal fact (may be None if the user hasn't filled out the form yet)
+        'selected_animal': selected_animal
     }
     return render_template('animal_facts.html', **context)
 
@@ -118,90 +127,3 @@ def save_image(image, filter_type):
     return file_path
 
 
-def apply_filter(file_path, filter_name):
-    """Apply a Pillow filter to a saved image."""
-    i = Image.open(file_path)
-    i.thumbnail((500, 500))
-    i = i.filter(filter_types_dict.get(filter_name))
-    i.save(file_path)
-
-@app.route('/image_filter', methods=['GET', 'POST'])
-def image_filter():
-    """Filter an image uploaded by the user, using the Pillow library."""
-    filter_types = filter_types_dict.keys()
-
-    if request.method == 'POST':
-        
-        # TODO: Get the user's chosen filter type (whichever one they chose in the form) and save
-        # as a variable
-        # HINT: remember that we're working with a POST route here so which requests function would you use?
-        filter_type = ''
-        
-        # Get the image file submitted by the user
-        image = request.files.get('users_image')
-
-        # TODO: call `save_image()` on the image & the user's chosen filter type, save the returned
-        # value as the new file path
-
-        # TODO: Call `apply_filter()` on the file path & filter type
-
-        image_url = f'./static/images/{image.filename}'
-
-        context = {
-            # TODO: Add context variables here for:
-            # - The full list of filter types
-            # - The image URL
-        }
-
-        return render_template('image_filter.html', **context)
-
-    else: # if it's a GET request
-        context = {
-            # TODO: Add context variable here for the full list of filter types
-        }
-        return render_template('image_filter.html', **context)
-
-
-################################################################################
-# GIF SEARCH ROUTE
-################################################################################
-
-
-API_KEY = os.getenv('API_KEY')
-print(API_KEY)
-
-TENOR_URL = 'https://api.tenor.com/v1/search'
-pp = PrettyPrinter(indent=4)
-
-@app.route('/gif_search', methods=['GET', 'POST'])
-def gif_search():
-    """Show a form to search for GIFs and show resulting GIFs from Tenor API."""
-    if request.method == 'POST':
-        # TODO: Get the search query & number of GIFs requested by the user, store each as a 
-        # variable
-
-        response = requests.get(
-            TENOR_URL,
-            {
-                # TODO: Add in key-value pairs for:
-                # - 'q': the search query
-                # - 'key': the API key (defined above)
-                # - 'limit': the number of GIFs requested
-            })
-
-        gifs = json.loads(response.content).get('results')
-
-        context = {
-            'gifs': gifs
-        }
-
-        # Uncomment me to see the result JSON!
-        # pp.pprint(gifs)
-
-        return render_template('gif_search.html', **context)
-    else:
-        return render_template('gif_search.html')
-
-if __name__ == '__main__':
-    app.config['ENV'] = 'development'
-    app.run(debug=True)
